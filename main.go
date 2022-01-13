@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Ali Yetkin info@aliyetkin.com
+Copyright © 2021 Ali Yetkin info@aliyetkin.com / github.com/ayetkin
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
