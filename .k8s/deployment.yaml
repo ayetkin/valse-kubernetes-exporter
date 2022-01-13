@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valse-kubernetes-exporter
+  namespace: kube-system
+  labels:
+    app: valse-kubernetes-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: valse-kubernetes-exporter
+  template:
+    metadata:
+      labels:
+        app: valse-kubernetes-exporter
+    spec:
+      containers:
+        - name: valse-kubernetes-exporter
+          image: ayetkin/valse:0.5.1
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: valse-config
+              mountPath: /app/.configs/
+              readOnly: true
+          resources:
+            limits:
+              memory: 200Mi
+              cpu: 250m
+            requests:
+              memory: 50Mi
+              cpu: 50m
+      serviceAccountName: valse
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: valse-config
+          configMap:
+            name: valse-config
+            items:
+              - key: config.yaml
+                path: config.yaml

@@ -1,0 +1,61 @@
+replicaCount: 1
+
+namespace: kube-system
+
+image:
+  repository: ayetkin/valse:0.5.1
+  pullPolicy: Always
+  tag: "${VERSION}"
+
+imagePullSecrets:
+  - name: valse-kubernetes-exporter
+
+nameOverride: ""
+fullnameOverride: "valse-kubernetes-exporter"
+
+appConfig:
+  Cluster:
+    Name: ""
+    Region: ""
+  ScheduledTaskIntervalSeconds: 30
+  ExcludedNamespaces: ""
+  Client:
+    InClusterConfig: true
+  Mongodb:
+    Hosts: [ "","" ]
+    Username: ""
+    Password: ""
+    Port: ""
+    Database: ""
+    ReplicaSet: ""
+    TimeoutSeconds: 10
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+serviceAccount:
+  create: true
+  name: ""
+
+configmap:
+  create: true
+  name: ""
+
+secret:
+  create: false
+  name: ""
+
+rbac:
+  create: true
+  name: ""
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }

@@ -1,0 +1,22 @@
+apiVersion: v1
+data:
+  config.yaml: |-
+    Cluster:
+      Name: ""
+      Region: ""
+    ExcludedNamespaces: ""
+    ScheduledTaskIntervalSeconds: 30
+    Client:
+      InClusterConfig: true
+    Mongodb:
+      Hosts: [ "", "", "" ]
+      Username: ""
+      Password: ""
+      Port: 
+      Database: ""
+      ReplicaSet: ""
+      TimeoutSeconds: 10
+kind: ConfigMap
+metadata:
+  name: valse-config
+  namespace: kube-system

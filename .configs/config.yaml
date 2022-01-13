@@ -1,0 +1,19 @@
+Cluster:
+  Name: ""
+  Region: ""
+
+ScheduledTaskIntervalSeconds: 10
+
+ExcludedNamespaces: ""
+
+Client:
+  InClusterConfig: false
+
+Mongodb:
+  Hosts: [ "", "", "" ]
+  Username: 
+  Password: 
+  Port: 
+  Database: ""
+  ReplicaSet: ""
+  TimeoutSeconds: 10

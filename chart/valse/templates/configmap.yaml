@@ -1,0 +1,12 @@
+{{- if .Values.configmap.create -}}
+apiVersion: v1
+data:
+  config.yaml: |-
+  {{- toYaml .Values.appConfig | nindent 12 }}
+kind: ConfigMap
+metadata:
+  name: {{ include "valse.configmapName" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "valse.labels" . | nindent 4 }}
+{{- end }}

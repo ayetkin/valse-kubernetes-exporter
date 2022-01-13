@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: A Helm chart for Kubernetes
+name: valse
+type: application
+version: 1.0.0
+icon: https://cdn2.iconfinder.com/data/icons/mixd/512/13_kubernetes-1024.png
