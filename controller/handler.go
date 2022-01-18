@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
-	"valse/controllers/entity"
-	"valse/controllers/models"
-	"valse/controllers/repository"
+	"valse/controller/entity"
+	"valse/controller/models"
+	"valse/controller/repository"
 	"valse/pkg/config"
 	"valse/pkg/k8s"
 	"valse/pkg/mongodb"
@@ -90,12 +90,19 @@ func DiscoverKubernetesResources(appConfig *config.AppConfig, k8sClient k8s.Clie
 		return nil, errors.New(fmt.Sprintf("Failed to retrieve pods. %v", err))
 	}
 
+	certExpireDate, err := k8sGet.CertExpireDate(nodes[0].Ip)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Failed to retrieve cert expire date. %v", err))
+	}
+
 	cluster := models.Cluster{
-		Name:     appConfig.Cluster.Name,
-		Version:  version.String(),
-		Region:   appConfig.Cluster.Region,
-		Address:  nodes[0].Ip,
-		Hostname: nodes[0].Hostname,
+		Name:           appConfig.Cluster.Name,
+		Env:            appConfig.Cluster.Env,
+		Region:         appConfig.Cluster.Region,
+		Version:        version.String(),
+		CertExpireDate: certExpireDate,
+		Address:        nodes[0].Ip,
+		Hostname:       nodes[0].Hostname,
 		Statics: &models.Statics{
 			NodeCount:        len(nodes),
 			NamespaceCount:   len(namespaces),

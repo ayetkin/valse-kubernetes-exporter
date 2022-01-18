@@ -1,10 +1,19 @@
-package helpers
+package utils
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strings"
 	"time"
 )
+
+func TlsDial(url string) (func() tls.ConnectionState, error) {
+	conn, err := tls.Dial("tcp", url, &tls.Config{InsecureSkipVerify: true})
+	if err != nil {
+		return nil, err
+	}
+	return conn.ConnectionState, err
+}
 
 // SplitKindName using to find kind from pod name
 func SplitKindName(str string) string {

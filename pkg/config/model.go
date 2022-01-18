@@ -5,6 +5,7 @@ import "time"
 type AppConfig struct {
 	Cluster struct {
 		Name   string `json:"name" yaml:"name"`
+		Env    string `json:"env" yaml:"env"`
 		Region string `json:"region" yaml:"region"`
 	} `json:"cluster" yaml:"cluster"`
 

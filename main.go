@@ -16,9 +16,9 @@ limitations under the License.
 package main
 
 import (
-	"valse/controllers"
+	"valse/controller"
 )
 
 func main() {
-	controllers.Init()
+	controller.Init()
 }

@@ -1,12 +1,14 @@
 package models
 
 type Cluster struct {
-	Name     string   `json:"name" bson:"name"`
-	Region   string   `json:"region" bson:"region"`
-	Version  string   `json:"version" bson:"version"`
-	Address  string   `json:"address" bson:"address"`
-	Hostname string   `json:"hostname" bson:"hostname"`
-	Statics  *Statics `json:"statics" bson:"statics"`
+	Name           string   `json:"name" bson:"name"`
+	Env            string   `json:"env" bson:"env"`
+	Region         string   `json:"region" bson:"region"`
+	Version        string   `json:"version" bson:"version"`
+	CertExpireDate string   `json:"cert_expire_date" bson:"cert_expire_date"`
+	Address        string   `json:"address" bson:"address"`
+	Hostname       string   `json:"hostname" bson:"hostname"`
+	Statics        *Statics `json:"statics" bson:"statics"`
 }
 
 type Statics struct {

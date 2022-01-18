@@ -3,7 +3,7 @@ package entity
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
-	"valse/controllers/models"
+	"valse/controller/models"
 )
 
 type KubernetesResources struct {

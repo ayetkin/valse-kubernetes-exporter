@@ -6,13 +6,14 @@ import (
 	meta1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"strings"
-	"valse/controllers/models"
-	"valse/pkg/helpers"
+	"valse/controller/models"
 	"valse/pkg/k8s"
+	"valse/pkg/utils"
 )
 
 type Get interface {
 	Version() (*version.Info, error)
+	CertExpireDate(apiServer string) (string, error)
 	Nodes() ([]models.Nodes, error)
 	Namespaces() ([]models.Namespaces, error)
 	Deployments() ([]models.Deployments, error)
@@ -24,6 +25,13 @@ type Get interface {
 	Services() ([]models.Services, error)
 }
 
+type get struct {
+	namespace          string
+	excludedNamespaces string
+	client             k8s.Client
+	logger             *logrus.Logger
+}
+
 func NewGet(namespace string, excludedNamespaces string, clientSet k8s.Client, logger *logrus.Logger) Get {
 	return &get{
 		namespace:          namespace,
@@ -33,11 +41,18 @@ func NewGet(namespace string, excludedNamespaces string, clientSet k8s.Client, l
 	}
 }
 
-type get struct {
-	namespace          string
-	excludedNamespaces string
-	client             k8s.Client
-	logger             *logrus.Logger
+func (g *get) CertExpireDate(apiServer string) (string, error) {
+
+	g.logger.Info("Getting resource from kubernetes url: Certificate expire date")
+
+	cnnState, err := utils.TlsDial(apiServer + ":6443")
+	if err != nil {
+		return "", err
+	}
+
+	expiry := cnnState().PeerCertificates[0].NotAfter
+
+	return expiry.Format("02.01.2006"), nil
 }
 
 func (g *get) Version() (*version.Info, error) {
@@ -86,7 +101,7 @@ func (g *get) Nodes() ([]models.Nodes, error) {
 			Hostname:   item.Status.Addresses[1].Address,
 			Ip:         item.Status.Addresses[0].Address,
 			Role:       "worker",
-			Age:        helpers.Age(item.CreationTimestamp.Time),
+			Age:        utils.Age(item.CreationTimestamp.Time),
 			Version:    item.Status.NodeInfo.KubeletVersion,
 			Conditions: nodeCondition,
 		}
@@ -128,7 +143,7 @@ func (g *get) Namespaces() ([]models.Namespaces, error) {
 		n := models.Namespaces{
 			Name:  item.Name,
 			Phase: string(item.Status.Phase),
-			Age:   helpers.Age(item.CreationTimestamp.Time),
+			Age:   utils.Age(item.CreationTimestamp.Time),
 		}
 
 		namespaces = append(namespaces, n)
@@ -159,7 +174,7 @@ func (g *get) Deployments() ([]models.Deployments, error) {
 		d := models.Deployments{
 			Name:                item.Name,
 			Namespace:           item.Namespace,
-			Age:                 helpers.Age(item.CreationTimestamp.Time),
+			Age:                 utils.Age(item.CreationTimestamp.Time),
 			Replicas:            item.Status.Replicas,
 			ReadyReplicas:       item.Status.ReadyReplicas,
 			AvailableReplicas:   item.Status.AvailableReplicas,
@@ -194,7 +209,7 @@ func (g *get) DaemonSets() ([]models.DaemonSets, error) {
 		d := models.DaemonSets{
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
-			Age:                    helpers.Age(item.CreationTimestamp.Time),
+			Age:                    utils.Age(item.CreationTimestamp.Time),
 			DesiredNumberScheduled: item.Status.DesiredNumberScheduled,
 			CurrentNumberScheduled: item.Status.CurrentNumberScheduled,
 			NumberReady:            item.Status.NumberReady,
@@ -229,7 +244,7 @@ func (g *get) StatefulSets() ([]models.StatefulSets, error) {
 		s := models.StatefulSets{
 			Name:          item.Name,
 			Namespace:     item.Namespace,
-			Age:           helpers.Age(item.CreationTimestamp.Time),
+			Age:           utils.Age(item.CreationTimestamp.Time),
 			Replicas:      item.Status.Replicas,
 			ReadyReplicas: item.Status.ReadyReplicas,
 		}
@@ -269,7 +284,7 @@ func (g *get) Jobs() ([]models.Jobs, error) {
 		j := models.Jobs{
 			Name:            item.Name,
 			Namespaces:      item.Namespace,
-			Age:             helpers.Age(item.CreationTimestamp.Time),
+			Age:             utils.Age(item.CreationTimestamp.Time),
 			OwnerReferences: &models.JobOwnerReferences{},
 			Conditions:      jobsConditions,
 		}
@@ -317,7 +332,7 @@ func (g *get) CronJobs() ([]models.CronJobs, error) {
 		c := models.CronJobs{
 			Name:              item.Name,
 			Namespace:         item.Namespace,
-			Age:               helpers.Age(item.CreationTimestamp.Time),
+			Age:               utils.Age(item.CreationTimestamp.Time),
 			Schedule:          item.Spec.Schedule,
 			Suspended:         item.Spec.Suspend,
 			Active:            cronJobsActive,
@@ -394,7 +409,7 @@ func (g *get) Pods() ([]models.Pods, error) {
 		p := models.Pods{
 			Name:              item.Name,
 			Namespace:         item.Namespace,
-			Age:               helpers.Age(item.CreationTimestamp.Time),
+			Age:               utils.Age(item.CreationTimestamp.Time),
 			Phase:             string(item.Status.Phase),
 			Reason:            item.Status.Reason,
 			Message:           item.Status.Message,
@@ -410,7 +425,7 @@ func (g *get) Pods() ([]models.Pods, error) {
 
 			if p.OwnerReferences.Kind == "ReplicaSet" {
 				p.OwnerReferences.Kind = "Deployment"
-				p.OwnerReferences.Name = helpers.SplitKindName(p.OwnerReferences.Name)
+				p.OwnerReferences.Name = utils.SplitKindName(p.OwnerReferences.Name)
 			}
 
 			if p.OwnerReferences.Kind == "Node" {
@@ -480,7 +495,7 @@ func (g *get) Services() ([]models.Services, error) {
 			Name:        item.Name,
 			Namespace:   item.Namespace,
 			Annotations: annotations,
-			Age:         helpers.Age(item.CreationTimestamp.Time),
+			Age:         utils.Age(item.CreationTimestamp.Time),
 			Type:        string(item.Spec.Type),
 			Ports:       servicePorts,
 		}

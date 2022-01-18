@@ -1,5 +1,6 @@
 Cluster:
   Name: ""
+  Env: ""
   Region: ""
 
 ScheduledTaskIntervalSeconds: 10

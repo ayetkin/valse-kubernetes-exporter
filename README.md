@@ -14,17 +14,19 @@ For envoy middleware load balancers used in Hepsiburada, it has been started to 
 Cluster:  
   # Kubernetes cluster name
   Name: "devops-k8s-av"
+  # Kubernetes cluster environment
+  Env: "production"
   # Kubernetes cluster region
   Region: "europe"
 
-# Interval the Kubernetes resouce discovery will be made
+# Interval the Kubernetes resource discovery will be made
 ScheduledTaskIntervalSeconds: 10   
 
-# Exclude some namespaces from Kubernetes resouce discovery
+# Exclude some namespaces from Kubernetes resource discovery
 ExcludedNamespaces: ""
 
-# If project run locally and want to use default kubeconfig set this value true.
-# If app will run in kubernetes cluster, this value must be false.
+# If project run locally and want to use default kubeconfig set this value false.
+# If app will run in kubernetes cluster, this value must be true.
 Client:
   InClusterConfig: true
 
