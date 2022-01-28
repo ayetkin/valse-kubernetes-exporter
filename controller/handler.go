@@ -16,7 +16,7 @@ import (
 	"valse/pkg/mongodb"
 )
 
-func RunScheduledJob(appConfig *config.AppConfig, k8sClient k8s.Client, mongodbClient mongodb.OfficialClient, logger *logrus.Logger) {
+func RunScheduledJob(appConfig *config.AppConfig, k8sClient k8s.Client, mongodbClient mongodb.MongoClient, logger *logrus.Logger) {
 
 	logger.Warningf("Kubernetes resources discovery task triggered (interval: %v)", appConfig.ScheduledTaskIntervalSeconds*time.Second)
 
@@ -90,7 +90,7 @@ func DiscoverKubernetesResources(appConfig *config.AppConfig, k8sClient k8s.Clie
 		return nil, errors.New(fmt.Sprintf("Failed to retrieve pods. %v", err))
 	}
 
-	certExpireDate, err := k8sGet.CertExpireDate(nodes[0].Ip)
+	certExpireDate, err := k8sGet.CertExpireDate()
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Failed to retrieve cert expire date. %v", err))
 	}
@@ -134,11 +134,11 @@ func DiscoverKubernetesResources(appConfig *config.AppConfig, k8sClient k8s.Clie
 	return k8sResources, nil
 }
 
-func UpdateMongoCollection(appConfig *config.AppConfig, k8sResources *entity.KubernetesResources, client mongodb.OfficialClient, logger *logrus.Logger) error {
+func UpdateMongoCollection(appConfig *config.AppConfig, k8sResources *entity.KubernetesResources, client mongodb.MongoClient, logger *logrus.Logger) error {
 
 	valseRepository := repository.NewValseRepository(appConfig.MongoDB.Database, client, logger)
 
-	itemFromMongodb, err := valseRepository.GetItemByClusterAddress(context.Background(), k8sResources.Cluster.Address)
+	itemFromMongodb, err := valseRepository.GetItemByClusterName(context.Background(), k8sResources.Cluster.Name)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			logger.WithField("exception.backtrace", err).Warningf(fmt.Sprintf("Failed to getting item from mongodb!"))

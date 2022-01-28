@@ -22,12 +22,11 @@ func NewLogger() *logrus.Logger {
 }
 
 func newLogger() *logrus.Logger {
-	var logger = &logrus.Logger{
+	return &logrus.Logger{
 		Out:       os.Stdout,
 		Formatter: &logrus.TextFormatter{FullTimestamp: true},
 		Level:     logrus.DebugLevel,
 	}
-	return logger
 }
 
 type errors struct {

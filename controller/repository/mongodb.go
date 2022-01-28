@@ -12,23 +12,23 @@ import (
 )
 
 type ValseRepository interface {
-	GetItemByClusterAddress(ctx context.Context, clusterAddress string) (*entity.KubernetesResources, error)
+	GetItemByClusterName(ctx context.Context, clusterName string) (k8sResources *entity.KubernetesResources, err error)
 	UpsertItem(ctx context.Context, item entity.KubernetesResources) (*mongo.UpdateResult, error)
 }
 
 type valseRepository struct {
-	client       mongodb.OfficialClient
+	client       mongodb.MongoClient
 	databaseName string
 	collection   string
 	logger       *logrus.Logger
 }
 
-func NewValseRepository(databaseName string, client mongodb.OfficialClient, logger *logrus.Logger) ValseRepository {
+func NewValseRepository(databaseName string, client mongodb.MongoClient, logger *logrus.Logger) ValseRepository {
 
 	err := client.EnsureIndex(
-		[]string{"cluster.address"},
+		[]string{"cluster.name"},
 		true,
-		"ClusterAddress",
+		"ClusterName",
 		databaseName, consts.DefaultCollection,
 	)
 	if err != nil {
@@ -43,11 +43,11 @@ func NewValseRepository(databaseName string, client mongodb.OfficialClient, logg
 	}
 }
 
-func (v *valseRepository) GetItemByClusterAddress(ctx context.Context, clusterAddress string) (k8sResources *entity.KubernetesResources, err error) {
+func (v *valseRepository) GetItemByClusterName(ctx context.Context, clusterName string) (k8sResources *entity.KubernetesResources, err error) {
 
 	var session = v.client.NewSessionWithSecondaryPreferred(v.databaseName)
 
-	err = session.Collection(v.collection).FindOne(ctx, bson.M{"cluster.address": clusterAddress}).Decode(&k8sResources)
+	err = session.Collection(v.collection).FindOne(ctx, bson.M{"cluster.name": clusterName}).Decode(&k8sResources)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (v *valseRepository) UpsertItem(ctx context.Context, item entity.Kubernetes
 	var session = v.client.NewSession(v.databaseName)
 
 	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"cluster.address": item.Cluster.Address}
+	filter := bson.M{"cluster.name": item.Cluster.Name}
 
 	updateResult, err := session.Collection(v.collection).ReplaceOne(ctx, filter, item, opts)
 	if err != nil {

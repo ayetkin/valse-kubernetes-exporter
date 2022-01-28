@@ -13,7 +13,7 @@ import (
 
 type Get interface {
 	Version() (*version.Info, error)
-	CertExpireDate(apiServer string) (string, error)
+	CertExpireDate() (string, error)
 	Nodes() ([]models.Nodes, error)
 	Namespaces() ([]models.Namespaces, error)
 	Deployments() ([]models.Deployments, error)
@@ -39,20 +39,6 @@ func NewGet(namespace string, excludedNamespaces string, clientSet k8s.Client, l
 		client:             clientSet,
 		logger:             logger,
 	}
-}
-
-func (g *get) CertExpireDate(apiServer string) (string, error) {
-
-	g.logger.Info("Getting resource from kubernetes url: Certificate expire date")
-
-	cnnState, err := utils.TlsDial(apiServer + ":6443")
-	if err != nil {
-		return "", err
-	}
-
-	expiry := cnnState().PeerCertificates[0].NotAfter
-
-	return expiry.Format("02.01.2006"), nil
 }
 
 func (g *get) Version() (*version.Info, error) {
@@ -98,12 +84,19 @@ func (g *get) Nodes() ([]models.Nodes, error) {
 		}
 
 		n := models.Nodes{
-			Hostname:   item.Status.Addresses[1].Address,
-			Ip:         item.Status.Addresses[0].Address,
 			Role:       "worker",
 			Age:        utils.Age(item.CreationTimestamp.Time),
 			Version:    item.Status.NodeInfo.KubeletVersion,
 			Conditions: nodeCondition,
+		}
+
+		for _, address := range item.Status.Addresses {
+			if address.Type == "Hostname" {
+				n.Hostname = address.Address
+			}
+			if address.Type == "InternalIP" {
+				n.Ip = address.Address
+			}
 		}
 
 		for i, v := range item.Labels {
@@ -504,4 +497,20 @@ func (g *get) Services() ([]models.Services, error) {
 	}
 
 	return services, nil
+}
+
+func (g *get) CertExpireDate() (string, error) {
+
+	g.logger.Info("Getting resource from kubernetes url: Certificate expire date")
+
+	apiServer := g.client.ApiCoreV1().RESTClient().Get().URL().Host
+
+	cnnState, err := utils.TlsDial(apiServer)
+	if err != nil {
+		return "", err
+	}
+
+	expiry := cnnState().PeerCertificates[0].NotAfter
+
+	return expiry.Format("02.01.2006"), nil
 }

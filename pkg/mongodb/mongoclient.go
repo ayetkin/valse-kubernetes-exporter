@@ -12,13 +12,13 @@ import (
 	"valse/pkg/config"
 )
 
-type OfficialClient interface {
+type MongoClient interface {
 	NewSession(dbName string) *mongo.Database
 	NewSessionWithSecondaryPreferred(dbName string) *mongo.Database
 	EnsureIndex(indexKeys []string, isUnique bool, indexName, dbName, collection string) error
 }
 
-func NewClient(appConfig *config.AppConfig, logger *logrus.Logger) OfficialClient {
+func NewClient(appConfig *config.AppConfig, logger *logrus.Logger) MongoClient {
 
 	var (
 		client *mongo.Client
@@ -42,18 +42,18 @@ func NewClient(appConfig *config.AppConfig, logger *logrus.Logger) OfficialClien
 		logger.Fatalf("%v", err)
 	}
 
-	return &officialClient{
+	return &mongoClient{
 		client: client,
 		logger: logger,
 	}
 }
 
-type officialClient struct {
+type mongoClient struct {
 	client *mongo.Client
 	logger *logrus.Logger
 }
 
-func (c *officialClient) NewSessionWithSecondaryPreferred(dbName string) *mongo.Database {
+func (c *mongoClient) NewSessionWithSecondaryPreferred(dbName string) *mongo.Database {
 
 	secondary := readpref.SecondaryPreferred()
 	dbOpts := options.Database().SetReadPreference(secondary)
@@ -61,11 +61,11 @@ func (c *officialClient) NewSessionWithSecondaryPreferred(dbName string) *mongo.
 	return c.client.Database(dbName, dbOpts)
 }
 
-func (c *officialClient) NewSession(dbName string) *mongo.Database {
+func (c *mongoClient) NewSession(dbName string) *mongo.Database {
 	return c.client.Database(dbName)
 }
 
-func (c *officialClient) EnsureIndex(indexKeys []string, isUnique bool, indexName, dbName, collection string) error {
+func (c *mongoClient) EnsureIndex(indexKeys []string, isUnique bool, indexName, dbName, collection string) error {
 
 	serviceCollection := c.client.Database(dbName).Collection(collection)
 
